@@ -1,0 +1,6 @@
+@StockHive_HostAddress = http://localhost:5274
+
+GET {{StockHive_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
