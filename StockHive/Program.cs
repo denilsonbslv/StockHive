@@ -1,27 +1,75 @@
-// using statements necessários que podem estar faltando
+using Asp.Versioning.ApiExplorer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using StockHive.Configure;
 using StockHive.Data;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using System;
+using System.Reflection;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ======================= INÍCIO DA CONFIGURAÇÃO DO BANCO DE DADOS =======================
-
-// 1. CORRIGIDO: Ler a connection string e GUARDAR em uma variável.
+// --- Configuraï¿½ï¿½o do Banco de Dados ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-// 2. ADICIONADO: Registrar o AppDbContext nos serviços da aplicação.
-//    Isso "ensina" a API a como se conectar ao banco usando a string acima.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// ======================= FIM DA CONFIGURAÇÃO DO BANCO DE DADOS =======================
-
-
-// Add services to the container.
+// --- Adiciona os Controllers e o AutoMapper ---
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddAutoMapper(typeof(Program));
+
+// --- Configuraï¿½ï¿½o do Versionamento (Correto como estava) ---
+builder.Services.AddApiVersioning(options =>
+{
+    options.ReportApiVersions = true;
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);
+}).AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
+// ======================= CONFIGURAï¿½ï¿½O DO SWAGGER CORRIGIDA =======================
+
+// 1. Registra nossa classe auxiliar na Injeï¿½ï¿½o de Dependï¿½ncia
+builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+
+// 2. Adiciona o SwaggerGen. Ele vai usar nossa classe auxiliar automaticamente.
+builder.Services.AddSwaggerGen(options =>
+{
+    // Include XML comments for Swagger
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
+
+    // A configuraï¿½ï¿½o de seguranï¿½a para JWT (Bearer) que vocï¿½ jï¿½ tinha. Perfeito!
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Por favor, insira o token JWT com Bearer no campo",
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "bearer"
+    });
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
 
 var app = builder.Build();
 
@@ -29,13 +77,23 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    // ======================= CONFIGURAï¿½ï¿½O DO SWAGGER UI CORRIGIDA =======================
+    // Precisamos dizer ao Swagger UI para criar um endpoint para cada versï¿½o da API
+
+    // Pegamos o provedor de descriï¿½ï¿½o de versï¿½o da API que foi registrado
+    var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
+    app.UseSwaggerUI(options =>
+    {
+        // Cria um endpoint na UI para cada versï¿½o descoberta
+        foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
+        {
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+        }
+    });
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
