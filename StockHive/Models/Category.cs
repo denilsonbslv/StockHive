@@ -5,35 +5,46 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StockHive.Models;
 
+/// <summary>
+/// Categoria de produtos, suportando hierarquia via auto-relacionamento.
+/// </summary>
 public class Category : IAuditable
 {
+    /// <summary>
+    /// Identificador único da categoria.
+    /// </summary>
     [Key]
     public long Id { get; set; }
 
+    /// <summary>
+    /// Nome da categoria.
+    /// </summary>
     [Required(ErrorMessage = "O nome da categoria é obrigatório.")]
     [MaxLength(100)]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
-    // --- AQUI ESTÁ A LÓGICA DO AUTO-RELACIONAMENTO ---
-
-    // 1. A coluna da Chave Estrangeira (o "BIGINT NULL").
-    // O EF Core usará esta propriedade para armazenar o ID da categoria pai.
+    /// <summary>
+    /// Identificador opcional da categoria pai.
+    /// </summary>
     public long? ParentCategoryId { get; set; }
 
-    // 2. A Propriedade de Navegação para o Pai.
-    // Isso nos permite acessar o objeto da categoria pai diretamente no código.
-    // Ex: var nomeDoPai = minhaCategoria.ParentCategory.Name;
+    /// <summary>
+    /// Referência para a categoria pai.
+    /// </summary>
     [ForeignKey("ParentCategoryId")]
     public Category? ParentCategory { get; set; }
 
-    // 3. A Propriedade de Navegação para os Filhos (o outro lado da relação).
-    // Isso nos permite obter uma lista de todas as subcategorias de uma categoria.
-    // Ex: foreach(var sub in minhaCategoria.SubCategories) { ... }
+    /// <summary>
+    /// Subcategorias associadas.
+    /// </summary>
     public ICollection<Category> SubCategories { get; set; } = new List<Category>();
 
+    /// <inheritdoc/>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    /// <inheritdoc/>
     public DateTime? UpdatedAt { get; set; }
 
+    /// <inheritdoc/>
     public DateTime? DeletedAt { get; set; }
 }
