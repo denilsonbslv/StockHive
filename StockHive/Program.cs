@@ -16,7 +16,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // --- Adiciona os Controllers e o AutoMapper ---
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    // Esta configuração crucial diz ao serializador para não quebrar
+    // quando encontrar um loop de referência (Pai -> Filho -> Pai).
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+});
 builder.Services.AddAutoMapper(typeof(Program));
 
 // --- Configura��o do Versionamento (Correto como estava) ---
