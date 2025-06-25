@@ -164,6 +164,46 @@ namespace StockHive.Controllers
             return NoContent();
         }
 
+        // MÉTODO PATCH: Aplica uma atualização PARCIAL.
+        // Espera um objeto apenas com as propriedades que devem ser alteradas.
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchSupplier(long id, UpdateSupplierDto patchDto)
+        {
+            var supplierFromDb = await _context.Suppliers.FindAsync(id);
+
+            if (supplierFromDb == null)
+            {
+                return NotFound($"Fornecedor com ID {id} não encontrado.");
+            }
+
+            // Lógica de atualização parcial: só atualiza o que não for nulo no DTO.
+            // Para strings, checamos IsNullOrEmpty para não atualizar com uma string vazia.
+            if (!string.IsNullOrEmpty(patchDto.Name))
+            {
+                supplierFromDb.Name = patchDto.Name;
+            }
+            if (patchDto.ContactPerson != null)
+            {
+                supplierFromDb.ContactPerson = patchDto.ContactPerson;
+            }
+            if (!string.IsNullOrEmpty(patchDto.Email))
+            {
+                supplierFromDb.Email = patchDto.Email;
+            }
+            if (patchDto.Phone != null)
+            {
+                supplierFromDb.Phone = patchDto.Phone;
+            }
+            if (patchDto.Address != null)
+            {
+                supplierFromDb.Address = patchDto.Address;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
         /// <summary>
         /// Realiza soft delete de um fornecedor.
         /// </summary>

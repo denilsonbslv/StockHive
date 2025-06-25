@@ -4,9 +4,8 @@ namespace StockHive.DTOs.Supplier
 {
     public class UpdateSupplierDto
     {
-        [Required]
         [MaxLength(255)]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [MaxLength(150)]
         public string? ContactPerson { get; set; }
