@@ -85,8 +85,11 @@ namespace StockHive.Data
             foreach (var entityEntry in entries)
             {
                 entityEntry.Entity.UpdatedAt = DateTime.UtcNow;
+
                 if (entityEntry.State == EntityState.Added)
+                {
                     entityEntry.Entity.CreatedAt = DateTime.UtcNow;
+                }
             }
 
             return await base.SaveChangesAsync(cancellationToken);

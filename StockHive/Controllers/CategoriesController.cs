@@ -12,12 +12,12 @@ using System.Linq;
 
 namespace StockHive.Controllers
 {
-    [Route("api/v{version:apiVersion}/[controller]")]
-    [ApiController]
-    [ApiVersion("1.0")]
     /// <summary>
     /// Controller para gerenciamento de categorias.
     /// </summary>
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiController]
+    [ApiVersion("1.0")]
     public class CategoriesController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -209,30 +209,39 @@ namespace StockHive.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(long id)
         {
-            var category = await _context.Categories
-                                         .Include(c => c.SubCategories)
-                                         .FirstOrDefaultAsync(c => c.Id == id);
+            var categoryToDelete = await _context.Categories
+                                                 .Include(c => c.SubCategories)
+                                                 .FirstOrDefaultAsync(c => c.Id == id);
 
-            if (category == null)
+            if (categoryToDelete == null)
             {
-                return NotFound($"Categoria com ID {id} não encontrado para deleção.");
-            }else if (category.DeletedAt.HasValue)
-            {
-                return BadRequest($"Categoria com ID {id} já foi deletada.");
-            }else if(category.SubCategories.Any())
-            {
-                return BadRequest($"Categoria com ID {id} não pode ser deletada pois possui subcategorias.");
+                return NotFound($"Categoria com ID {id} não encontrada.");
             }
 
-            // Implementação do SOFT DELETE
-            if (category is IAuditable auditableEntity)
-            {
-                auditableEntity.DeletedAt = DateTime.UtcNow;
-            }
+            await SoftDeleteCategoryRecursively(categoryToDelete);
 
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        private async Task SoftDeleteCategoryRecursively(Category category)
+        {
+            // Marca a categoria atual como deletada
+            category.DeletedAt = DateTime.UtcNow;
+
+            // Se a categoria tiver subcategorias, chama o método recursivamente para cada uma
+            if (category.SubCategories != null && category.SubCategories.Any())
+            {
+                foreach (var subCategory in category.SubCategories)
+                {
+                    // Carrega explicitamente as subcategorias da subcategoria atual
+                    await _context.Entry(subCategory)
+                                  .Collection(s => s.SubCategories)
+                                  .LoadAsync();
+                    await SoftDeleteCategoryRecursively(subCategory);
+                }
+            }
         }
     }
 }

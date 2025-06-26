@@ -1,4 +1,5 @@
 ﻿using StockHive.Enums;
+using StockHive.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -7,7 +8,7 @@ namespace StockHive.Models;
 /// <summary>
 /// Representa um movimento de estoque, como compra, venda, transferência ou ajuste.
 /// </summary>
-public class StockMovement
+public class StockMovement : IAuditable
 {
     /// <summary>
     /// Identificador único do movimento de estoque.
@@ -24,7 +25,7 @@ public class StockMovement
     /// Produto relacionado ao movimento de estoque.
     /// </summary>
     [ForeignKey("ProductId")]
-    public Product Product { get; set; }
+    public required Product Product { get; set; }
 
     /// <summary>
     /// Identificador do local de origem (opcional) do movimento.
@@ -70,4 +71,13 @@ public class StockMovement
     /// </summary>
     [MaxLength(1000)]
     public string? Notes { get; set; }
+
+    /// <inheritdoc/>
+    public DateTime CreatedAt { get; set; }
+
+    /// <inheritdoc/>
+    public DateTime? UpdatedAt { get; set; }
+
+    /// <inheritdoc/>
+    public DateTime? DeletedAt { get; set; }
 }

@@ -1,14 +1,34 @@
 ﻿namespace StockHive.QueryParameters;
 
+/// <summary>
+/// Define os parâmetros de consulta para filtrar e paginar fornecedores.
+/// </summary>
 public class SupplierQueryParameters
 {
-    // Parâmetros de Filtro/Busca
+    /// <summary>
+    /// Filtra os fornecedores pelo nome (busca parcial).
+    /// </summary>
     public string? Name { get; set; }
+
+    /// <summary>
+    /// Filtra os fornecedores pelo e-mail (busca parcial).
+    /// </summary>
     public string? Email { get; set; }
+
+    /// <summary>
+    /// Filtra os fornecedores pelo telefone (busca parcial).
+    /// </summary>
     public string? Phone { get; set; }
 
-    public DateTime? CreatedAtFrom { get; set; } // Data de criação "a partir de"
-    public DateTime? CreatedAtTo { get; set; }   // Data de criação "até"
+    /// <summary>
+    /// Data de início para filtrar fornecedores criados a partir desta data.
+    /// </summary>
+    public DateTime? CreatedAtFrom { get; set; }
+
+    /// <summary>
+    /// Data de fim para filtrar fornecedores criados até esta data.
+    /// </summary>
+    public DateTime? CreatedAtTo { get; set; }
 
     // Parâmetros de Paginação
     private const int MaxPageSize = 100;
