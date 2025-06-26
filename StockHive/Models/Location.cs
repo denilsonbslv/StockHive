@@ -22,10 +22,11 @@ namespace StockHive.Models
         public required string Name { get; set; }
 
         /// <summary>
-        /// Endereço físico (opcional).
+        /// Endereço físico (obrigatório).
         /// </summary>
+        [Required(ErrorMessage = "O endereço do local é obrigatório.")]
         [MaxLength(150)]
-        public string? Address { get; set; }
+        public required string Address { get; set; }
 
         /// <inheritdoc/>
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
